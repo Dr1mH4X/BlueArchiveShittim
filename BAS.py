@@ -40,10 +40,6 @@ def image_similarity(img1, img2, threshold=0.8):
     return similarity >= threshold
 
 class MuMuEmulator:
-    #def __init__(self, mumu_manager_path, emulator_path):
-       # self.mumu_manager_path = mumu_manager_path
-       # self.ip_address = '127.0.0.1'
-       # self.port = 16448
     def __init__(self, mumu_manager_path, emulator_path):
         self.mumu_manager_path = mumu_manager_path
         # 构建host.txt的完整路径
@@ -359,4 +355,4 @@ emu_console.main_operation(
     close_news_path,
     tolerance=0.8  # 可以根据需要调整这个值
 )
-# 需要手动连接adb >adb.exe connect 127.0.0.1:16448 签到没点  过场动画可以新增跳过 ip和端口全局变量化 公告栏点的是news不是close
+# 需要手动连接adb >adb.exe connect 127.0.0.1:16448 签到没点  过场动画可以新增跳过 ~~ip和端口全局变量化~~(已添加) 公告栏点的是news不是close
