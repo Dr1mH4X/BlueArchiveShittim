@@ -10,6 +10,8 @@ BAS意为碧蓝档案什亭之箱 你的BA自动化助手
 
 pip install -r requirements.txt安装环境
 
+修改MuMu模拟器的分辨率为1280*720
+
 修改BAS.PY中E:\MuMuPlayer-12.0\shell\MuMuManager.exe为自己电脑里的路径即可
 
 ### 写在最后的话
