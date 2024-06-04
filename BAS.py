@@ -43,7 +43,7 @@ class MuMuEmulator:
     def __init__(self, mumu_manager_path, emulator_path):
         self.mumu_manager_path = mumu_manager_path
         self.ip_address = '127.0.0.1'
-        self.port = 16384
+        self.port = 16448
 
     def is_emulator_running(self):
         adb_path = os.path.join(os.path.dirname(self.mumu_manager_path), 'adb.exe')
@@ -69,12 +69,11 @@ class MuMuEmulator:
         screenshot_path = f'screenshot_{int(time.time())}.png'
         pull_command = [adb_path, '-s', f'{self.ip_address}:{self.port}', 'pull', '/sdcard/screenshot.png', screenshot_path]
         subprocess.run(pull_command, check=True)
-        
-        
+
         self.manage_screenshots(screenshot_path)  # 管理截图数量
         print(f"Screenshot path:{screenshot_path}")
         return screenshot_path
-    
+
     def ensure_directory(self, directory):
         if not os.path.exists(directory):
             os.makedirs(directory)
@@ -98,7 +97,7 @@ class MuMuEmulator:
         self.manage_screenshots(screenshot_path)
         print(f"Screenshot path: {screenshot_path}")
         return screenshot_path
-    
+
     def send_touch_event(self, x, y):
         adb_path = os.path.join(os.path.dirname(self.mumu_manager_path), 'adb.exe')
         # 直接使用图标在截图中的像素坐标发送触摸事件
@@ -108,11 +107,11 @@ class MuMuEmulator:
     def find_similar(self, image_path, template_path, threshold=0.8):
         img = Image.open(image_path).convert('L')  # 转为灰度图像
         template = Image.open(template_path).convert('L')
-        
+
         template_blur = template.filter(ImageFilter.BLUR)
         diff = ImageChops.difference(img, template_blur)
         histogram = diff.histogram()
-        
+
         avg_brightness = sum(histogram[:256]) / len(histogram)
         if avg_brightness < threshold * 256:
             return True
@@ -194,7 +193,7 @@ class MuMuEmulator:
                                                 print("Clicked on JP_goclub button.")
                                                 time.sleep(1)
 
-                                                    # 查找 ./search/ALL_OK.png
+                                                # 查找 ./search/ALL_OK.png
                                                 if template_path == ALL_OK_path:
                                                     ALL_OK_position = app_icon_position
                                                     if ALL_OK_position:
@@ -256,11 +255,11 @@ class MuMuEmulator:
                 return screenshot_path
             time.sleep(0.5)
         return None
-    
+
     def close_news(self, sign_rewards_path, JP_news_path, close_news_path, tolerance=0.8):
         # 获取新的截图
         screenshot_path = self.take_screenshot()
-        
+
         # 检查是否有签到奖励
         sign_rewards_position = match_template(screenshot_path, sign_rewards_path, tolerance)
         if sign_rewards_position:
@@ -328,7 +327,9 @@ class MuMuEmulator:
             self.send_touch_event(screen_width // 2, screen_height // 2)
 
 # 实例化并调用主操作
-emu_console = MuMuEmulator(r'C555:\Program Files\Netease\MuMuPlayer-12.0\shell\MuMuManager.exe', None)
+emu_console = MuMuEmulator(
+    r"E:\Program Files\Netease\MuMu Player 12\shell\MuMuManager.exe", None
+)
 target_icon_path = './search/JP_appicon.png'
 login_icon_path = './search/JP_login.png'
 sign_rewards_path = './search/sign_rewards.png'
@@ -346,3 +347,4 @@ emu_console.main_operation(
     close_news_path,
     tolerance=0.8  # 可以根据需要调整这个值
 )
+# 需要手动连接adb >adb.exe connect 127.0.0.1:16448 签到没点  过场动画可以新增跳过 ip和端口全局变量化 公告栏点的是news不是close
