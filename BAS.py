@@ -40,10 +40,22 @@ def image_similarity(img1, img2, threshold=0.8):
     return similarity >= threshold
 
 class MuMuEmulator:
+    #def __init__(self, mumu_manager_path, emulator_path):
+       # self.mumu_manager_path = mumu_manager_path
+       # self.ip_address = '127.0.0.1'
+       # self.port = 16448
     def __init__(self, mumu_manager_path, emulator_path):
         self.mumu_manager_path = mumu_manager_path
-        self.ip_address = '127.0.0.1'
-        self.port = 16448
+        # 构建host.txt的完整路径
+        host_file_path = os.path.join(os.path.dirname(__file__), 'host.txt')
+    
+        # 读取并解析host.txt文件内容
+        with open(host_file_path, 'r') as file:
+            content = file.read().strip()  # 读取文件内容并移除首尾空白字符
+            ip, port = content.split(':')  # 按照':'分隔获取ip和port
+        
+        self.ip_address = ip
+        self.port = int(port)  # 端口转换为整型
 
     def is_emulator_running(self):
         adb_path = os.path.join(os.path.dirname(self.mumu_manager_path), 'adb.exe')
