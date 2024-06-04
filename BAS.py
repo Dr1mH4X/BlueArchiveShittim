@@ -120,43 +120,114 @@ class MuMuEmulator:
             return False
 
     def main_operation(self, target_icon_path, login_icon_path, sign_rewards_path, JP_news_path, close_news_path, tolerance=0.8):
+        templates = {
+            target_icon_path: "Target Icon",
+            login_icon_path: "Login Icon",
+            JP_news_path: "JP News Icon",
+            close_news_path: "Close News Button",
+            club_icon_path: "Club Icon",
+            JP_goclub_path: "JP Go Club Button",
+            ALL_OK_path: "ALL_OK",
+            ALL_HOME_path: "ALL_HOME",
+        }
+
         while True:
             screenshot_path = self.take_screenshot()
             if screenshot_path:
-                app_icon_position = match_template(screenshot_path, target_icon_path, tolerance)
-                if app_icon_position:
-                    print("Found app icon, sending touch event...")
-                    x, y = app_icon_position
-                    self.send_touch_event(x, y)
-                    break  # 找到应用图标后跳出循环
-                else:
-                    login_icon_position = match_template(screenshot_path, login_icon_path, tolerance)
-                    if login_icon_position:
-                        print("Found login icon, sending touch event directly...")
-                        x, y = login_icon_position
+                for template_path, template_name in templates.items():
+                    app_icon_position = match_template(screenshot_path, template_path, tolerance)
+                    if app_icon_position:
+                        print(f"Found {template_name}, sending touch event...")
+
+                        # 计算模板图像的中心坐标
+                        if template_path == JP_goclub_path:
+                            img = cv2.imread(JP_goclub_path, cv2.IMREAD_GRAYSCALE)
+                            w, h = img.shape[::-1]
+                            center_x, center_y = w // 2, h // 2
+                            x, y = app_icon_position[0] + center_x, app_icon_position[1] + center_y
+                        else:
+                            x, y = app_icon_position
+
                         self.send_touch_event(x, y)
-                        print("Login successful, ending operation.")
-                        return  # 登录成功后结束方法
+                        time.sleep(1)
+                        break  # 找到应用图标后跳出循环
+
+                    # 检查登录图标
+                    if template_path == login_icon_path:
+                        login_icon_position = app_icon_position
+                        if login_icon_position:
+                            print(f"Found {template_name}, sending touch event directly...")
+                            x, y = login_icon_position
+                            self.send_touch_event(x, y)
+                            time.sleep(1)
+                            print("Login successful, ending operation.")
+                            break
 
                     # 检查新闻图标
-                    news_icon_position = match_template(screenshot_path, JP_news_path, tolerance)
-                    if news_icon_position:
-                        print("Found news icon, attempting to close news...")
-                        x, y = news_icon_position
-                        self.send_touch_event(x, y)  # 点击新闻图标的关闭按钮
-                        if not self.close_news(sign_rewards_path, JP_news_path, close_news_path, tolerance):
-                            print("No need to close news, continuing with the script...")
-                        else:
-                            print("News closed, ending operation.")
-                            return
-                        continue 
+                    if template_path == JP_news_path:
+                        news_icon_position = app_icon_position
+                        if news_icon_position:
+                            print(f"Found {template_name}, attempting to close news...")
+                            x, y = news_icon_position
+                            self.send_touch_event(x, y)  # 点击新闻图标的关闭按钮
+                            if not self.close_news(sign_rewards_path, JP_news_path, close_news_path, tolerance):
+                                print("No need to close news, continuing with the script...")
+                            else:
+                                print("News closed, proceeding to the next steps...")
+                                time.sleep(1)  # 所有操作延迟1秒
 
-                    print("Neither app icon nor login icon found, retrying in 0.5 seconds...")
-                    time.sleep(0.5)
-            else:
-                print("Failed to take a screenshot, retrying in 0.5 seconds...")
-                time.sleep(0.5)
+                                # 查找并点击 ./search/club.png
+                                if template_path == club_icon_path:
+                                    club_position = app_icon_position
+                                    if club_position:
+                                        x, y = club_position
+                                        self.send_touch_event(x, y)
+                                        print("Clicked on club icon.")
+                                        time.sleep(1)
 
+                                        # 查找并点击 ./search/JP_goclub.png
+                                        if template_path == JP_goclub_path:
+                                            JP_goclub_position = app_icon_position
+                                            if JP_goclub_position:
+                                                x, y = JP_goclub_position
+                                                self.send_touch_event(x, y)
+                                                print("Clicked on JP_goclub button.")
+                                                time.sleep(1)
+
+                                                    # 查找 ./search/ALL_OK.png
+                                                if template_path == ALL_OK_path:
+                                                    ALL_OK_position = app_icon_position
+                                                    if ALL_OK_position:
+                                                        x, y = ALL_OK_position
+                                                        self.send_touch_event(x, y)
+                                                        print("Clicked on ALL_OK.")
+                                                        time.sleep(1)
+
+                                                        # 再次查找并点击 ./search/ALL_HOME.png
+                                                        if template_path == ALL_HOME_path:
+                                                            ALL_HOME_position = app_icon_position
+                                                            if ALL_HOME_position:
+                                                                x, y = ALL_HOME_position
+                                                                self.send_touch_event(x, y)
+                                                                print("Clicked on ALL_HOME after ALL_OK.")
+                                                            else:
+                                                                # 直接查找并点击 ./search/ALL_HOME.png
+                                                                ALL_HOME_position = self.match_template(screenshot_path, ALL_HOME_path, tolerance)
+                                                                if ALL_HOME_position:
+                                                                    x, y = ALL_HOME_position
+                                                                    self.send_touch_event(x, y)
+                                                                    print("Clicked on ALL_HOME directly.")
+                                                                else:
+                                                                    print("ALL_HOME not found after checking ALL_OK.")
+                                            else:
+                                                print("JP_goclub button not found.")
+                                        else:
+                                            print("Club icon not found.")
+                    else:
+                        continue
+
+    # 如果没有找到任何匹配项，结束循环
+    print("No matching icons found, ending operation.")
     def find_element(self, target_image_path, tolerance=0.8, max_attempts=10):
         screenshot_path = self.take_screenshot()
         if screenshot_path is None:
@@ -263,6 +334,10 @@ login_icon_path = './search/JP_login.png'
 sign_rewards_path = './search/sign_rewards.png'
 close_news_path = './search/close_news.png'
 JP_news_path = './search/JP_news.png'
+club_icon_path = "./search/club.png"
+JP_goclub_path = "./search/JP_goclub.png"
+ALL_OK_path = "./search/ALL_OK.png"
+ALL_HOME_path = "./search/ALL_HOME.png"
 emu_console.main_operation(
     target_icon_path, 
     login_icon_path, 
@@ -271,6 +346,3 @@ emu_console.main_operation(
     close_news_path,
     tolerance=0.8  # 可以根据需要调整这个值
 )
-
-
-
