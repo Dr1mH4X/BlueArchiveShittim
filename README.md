@@ -22,8 +22,6 @@ BAS意为碧蓝档案什亭之箱 你的BA自动化助手
 
 咖啡厅摸头
 
-
-
 ### 如何使用
 
 pip install -r requirements.txt安装环境
