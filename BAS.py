@@ -328,7 +328,7 @@ class MuMuEmulator:
             self.send_touch_event(screen_width // 2, screen_height // 2)
 
 # 实例化并调用主操作
-emu_console = MuMuEmulator(r'C:\Program Files\Netease\MuMuPlayer-12.0\shell\MuMuManager.exe', None)
+emu_console = MuMuEmulator(r'C555:\Program Files\Netease\MuMuPlayer-12.0\shell\MuMuManager.exe', None)
 target_icon_path = './search/JP_appicon.png'
 login_icon_path = './search/JP_login.png'
 sign_rewards_path = './search/sign_rewards.png'
