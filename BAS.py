@@ -22,8 +22,8 @@ def match_template(image_path, template_path, threshold=0.8):
 
     # 确保至少有一个匹配结果
     if max_val >= threshold:
-        # 输出匹配位置
-        print(f"Match Location: {max_loc}")
+        # 输出匹配位置及匹配到的模板图片名称
+        print(f"Match Location: {max_loc}, Matched Template: {os.path.basename(template_path)}")
         return max_loc
     else:
         print("No match found.")
@@ -119,9 +119,8 @@ class MuMuEmulator:
         else:
             return False
 
-    def main_operation(self, target_icon_path, login_icon_path, tolerance=0.8):
-        app_icon_found = False
-        while not app_icon_found:
+    def main_operation(self, target_icon_path, login_icon_path, sign_rewards_path, JP_news_path, close_news_path, tolerance=0.8):
+        while True:
             screenshot_path = self.take_screenshot()
             if screenshot_path:
                 app_icon_position = match_template(screenshot_path, target_icon_path, tolerance)
@@ -129,44 +128,34 @@ class MuMuEmulator:
                     print("Found app icon, sending touch event...")
                     x, y = app_icon_position
                     self.send_touch_event(x, y)
-                    app_icon_found = True
+                    break  # 找到应用图标后跳出循环
                 else:
                     login_icon_position = match_template(screenshot_path, login_icon_path, tolerance)
                     if login_icon_position:
                         print("Found login icon, sending touch event directly...")
                         x, y = login_icon_position
                         self.send_touch_event(x, y)
-                        break  # 找到login_icon后，跳出循环
-                    else:
-                        print("Neither app icon nor login icon found, retrying in 0.5 seconds...")
-                        time.sleep(0.5)
+                        print("Login successful, ending operation.")
+                        return  # 登录成功后结束方法
+
+                    # 检查新闻图标
+                    news_icon_position = match_template(screenshot_path, JP_news_path, tolerance)
+                    if news_icon_position:
+                        print("Found news icon, attempting to close news...")
+                        x, y = news_icon_position
+                        self.send_touch_event(x, y)  # 点击新闻图标的关闭按钮
+                        if not self.close_news(sign_rewards_path, JP_news_path, close_news_path, tolerance):
+                            print("No need to close news, continuing with the script...")
+                        else:
+                            print("News closed, ending operation.")
+                            return
+                        continue 
+
+                    print("Neither app icon nor login icon found, retrying in 0.5 seconds...")
+                    time.sleep(0.5)
             else:
                 print("Failed to take a screenshot, retrying in 0.5 seconds...")
                 time.sleep(0.5)
-
-            if app_icon_found:
-                print("App icon found and tapped, now looking for login icon...")
-                time.sleep(15)  # 假设应用打开后需要15秒加载至可操作界面
-
-                # 搜索login_icon，每0.5秒截一次图
-                start_time = time.time()
-                while time.time() - start_time < 30:  # 设置最长等待时间为30秒
-                    new_screenshot_path = self.take_screenshot()
-                    if new_screenshot_path:
-                        login_icon_position = match_template(new_screenshot_path, login_icon_path, tolerance)
-                        if login_icon_position:
-                            print("Login icon found, sending touch event...")
-                            x, y = login_icon_position
-                            self.send_touch_event(x, y)
-                            # 在这里添加登录之后的操作逻辑
-                            print("Login successful, proceeding with further actions...")
-                            break
-                    else:
-                        print("Failed to take a screenshot after tapping app icon.")
-                    time.sleep(0.5)
-
-                if not login_icon_position:
-                    print("Login icon not found within the given time.")
 
     def find_element(self, target_image_path, tolerance=0.8, max_attempts=10):
         screenshot_path = self.take_screenshot()
@@ -196,10 +185,89 @@ class MuMuEmulator:
                 return screenshot_path
             time.sleep(0.5)
         return None
+    
+    def close_news(self, sign_rewards_path, JP_news_path, close_news_path, tolerance=0.8):
+        # 获取新的截图
+        screenshot_path = self.take_screenshot()
+        
+        # 检查是否有签到奖励
+        sign_rewards_position = match_template(screenshot_path, sign_rewards_path, tolerance)
+        if sign_rewards_position:
+            print("Found sign rewards, sending touch event to the center of the screen...")
+            self.send_touch_event_to_center()  # 假设有一个方法发送触摸事件到屏幕中心
+            print("Sign rewards clicked.")
+        else:
+            print("Sign rewards not found, continuing to check JP_news...")
 
+        # 检查是否有新闻
+        JP_news_position = match_template(screenshot_path, JP_news_path, tolerance)
+        if JP_news_position:
+            print("Found JP_news, searching for close_news button...")
+            close_news_position = match_template(screenshot_path, close_news_path, tolerance)
+            if close_news_position:
+                print("Found close_news button, sending touch event...")
+                x, y = close_news_position
+                self.send_touch_event(x, y)
+                print("News closed.")
+                return True  # 新闻已关闭，返回True
+            else:
+                print("Close_news button not found, clicking on screen center instead...")
+                self.send_touch_event_to_center()
+                print("News not closed, but clicked on screen center.")
+                return False  # 新闻未关闭，但点击了屏幕中心，返回False
+        else:
+            print("JP_news not found, nothing to do.")
+            return False  # 未找到新闻，返回False
+    def post_login_actions(self):
+        sign_rewards_path = "./search/sign_rewards.png"
+        jp_news_path = "./search/JP_news.png"
+        close_news_path = "./search/close_news.png"
+        screen_width, screen_height = 1280, 720  # 固定的屏幕分辨率
+
+        # 查找签到奖励图标
+        sign_rewards_pos = match_template(self.take_screenshot(), sign_rewards_path, tolerance=0.8)
+        if sign_rewards_pos:
+            print("Found sign rewards icon, tapping center of the screen...")
+            self.send_touch_event(screen_width // 2, screen_height // 2)
+        else:
+            print("Sign rewards icon not found.")
+
+        # 直接查找日服新闻图标，一旦找到就尝试关闭
+        jp_news_pos = match_template(self.take_screenshot(), jp_news_path, tolerance=0.8)
+        if jp_news_pos:
+            print("Found JP news icon, attempting to close news...")
+
+            # 尝试关闭新闻
+            for _ in range(3):  # 尝试三次查找并关闭
+                close_news_pos = match_template(self.take_screenshot(), close_news_path, tolerance=0.8)
+                if close_news_pos:
+                    print("Closing news...")
+                    x, y = close_news_pos
+                    self.send_touch_event(x, y)
+                    break  # 成功点击关闭按钮后退出循环
+                else:
+                    print("Trying to find close button again...")
+                    time.sleep(0.5)  # 等待0.5秒再次尝试
+
+            if not close_news_pos:
+                print("Close news button not found after attempts, tapping center of the screen instead...")
+                self.send_touch_event(screen_width // 2, screen_height // 2)
+        else:
+            print("JP news icon not found, tapping center of the screen and ending script...")
+            self.send_touch_event(screen_width // 2, screen_height // 2)
 
 # 实例化并调用主操作
 emu_console = MuMuEmulator(r'E:\MuMuPlayer-12.0\shell\MuMuManager.exe', None)
 target_icon_path = './search/JP_appicon.png'
 login_icon_path = './search/JP_login.png'
-emu_console.main_operation(target_icon_path, login_icon_path)
+sign_rewards_path = './search/sign_rewards.png'
+close_news_path = './search/close_news.png'
+JP_news_path = './search/JP_news.png'
+emu_console.main_operation(
+    target_icon_path, 
+    login_icon_path, 
+    sign_rewards_path, 
+    JP_news_path, 
+    close_news_path,
+    tolerance=0.8  # 可以根据需要调整这个值
+)
