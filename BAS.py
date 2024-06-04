@@ -472,4 +472,4 @@ emu_console.main_operation(
     tolerance=0.8,  # 可以根据需要调整这个值
 )
 # 需要手动连接adb adb connect 127.0.0.1:16448 签到没点  过场动画可以新增跳过  公告栏点的是news不是close
-
+# 只改了全局ip和端口--第52行，全局adb路径和mumumanager等路径还未修改
