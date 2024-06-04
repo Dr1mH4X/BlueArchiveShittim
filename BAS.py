@@ -55,8 +55,8 @@ class MuMuEmulator:
         with open('config.json', 'r') as config_file:
             config_data = json.load(config_file)
             # 获取ip_address和port的值
-            self.ip_address = config_data.get('ip_address', '127.0.0.1')
-            self.port = config_data.get('port', 16448)
+            self.ip_address = config_data.get('ip_address')
+            self.port = config_data.get('port')
 
     def is_emulator_running(self):
         adb_path = os.path.join(os.path.dirname(self.mumu_manager_path), "adb.exe")
