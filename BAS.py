@@ -9,22 +9,25 @@ def match_template(image_path, template_path, threshold=0.8):
     # 读取图像和模板
     img = cv2.imread(image_path, cv2.IMREAD_COLOR)
     template = cv2.imread(template_path, cv2.IMREAD_COLOR)
-    
+
     # 获取模板的宽度和高度
     w, h = template.shape[:-1]
-    
+
     # 使用matchTemplate
     res = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
-    loc = np.where(res >= threshold)
-    
-    # 确保至少有一个匹配结果
-    if len(loc[0]) == 0:
-        return None
-    
-    # 返回第一个匹配位置的左上角坐标
-    return loc[1][0], loc[0][0]  # 注意这里的索引顺序，因为loc返回的是(y, x)
+    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
 
-# 更新find_element方法以使用match_template
+    # 输出匹配得分
+    print(f"Match Score: {max_val}")
+
+    # 确保至少有一个匹配结果
+    if max_val >= threshold:
+        # 输出匹配位置
+        print(f"Match Location: {max_loc}")
+        return max_loc
+    else:
+        print("No match found.")
+        return None
 
 def image_similarity(img1, img2, threshold=0.8):
     stat1 = ImageStat.Stat(img1)
@@ -52,20 +55,6 @@ class MuMuEmulator:
         except subprocess.CalledProcessError:
             pass
         return False
-    def find_element(self, target_image_path, tolerance=0.8, max_attempts=10):
-        screenshot_path = self.take_screenshot()
-        if screenshot_path is None:
-            print("Failed to take a screenshot")
-            return None
-        
-        # 使用match_template方法寻找图标
-        for _ in range(max_attempts):
-            position = match_template(screenshot_path, target_image_path, tolerance)
-            if position:
-                print(f"Found icon at position: {position}")
-                return screenshot_path
-            time.sleep(0.5)
-        return None
 
     def send_touch_event(self, x, y):
         adb_path = os.path.join(os.path.dirname(self.mumu_manager_path), 'adb.exe')
@@ -81,7 +70,9 @@ class MuMuEmulator:
         pull_command = [adb_path, '-s', f'{self.ip_address}:{self.port}', 'pull', '/sdcard/screenshot.png', screenshot_path]
         subprocess.run(pull_command, check=True)
         
+        
         self.manage_screenshots(screenshot_path)  # 管理截图数量
+        print(f"Screenshot path:{screenshot_path}")
         return screenshot_path
     
     def ensure_directory(self, directory):
@@ -97,7 +88,6 @@ class MuMuEmulator:
                 os.remove(file_to_remove)
 
     def take_screenshot(self):
-        self.ensure_directory('./screenshot/')
         timestamp = int(time.time())
         screenshot_path = f'./screenshot/screenshot_{timestamp}.png'
         adb_path = os.path.join(os.path.dirname(self.mumu_manager_path), 'adb.exe')
@@ -106,6 +96,7 @@ class MuMuEmulator:
         pull_command = [adb_path, '-s', f'{self.ip_address}:{self.port}', 'pull', '/sdcard/screenshot.png', screenshot_path]
         subprocess.run(pull_command, check=True)
         self.manage_screenshots(screenshot_path)
+        print(f"Screenshot path: {screenshot_path}")
         return screenshot_path
     
     def send_touch_event(self, x, y):
@@ -128,30 +119,87 @@ class MuMuEmulator:
         else:
             return False
 
-    def main_operation(self, target_icon_path, tolerance=0.8, max_attempts=10):
-        screenshot_path = self.find_element(target_icon_path, tolerance, max_attempts)
-        if screenshot_path:
-            print("Found app icon, sending touch event...")
-            position = match_template(screenshot_path, target_icon_path, tolerance)
-            if position:
-                x, y = position
-                self.send_touch_event(x, y)
-                print(f"Clicked at position: {x}, {y}")
-
-                print("Waiting for 1 minute...")
-                time.sleep(60)  # 等待1分钟
-
-                # 直接使用固定分辨率的屏幕中心坐标
-                center_x = 1280 // 2  # 假设分辨率为1280x720
-                center_y = 720 // 2
-                self.send_touch_event(center_x, center_y)
-                print("Clicked at the center of the screen after 1 minute.")
+    def main_operation(self, target_icon_path, login_icon_path, tolerance=0.8):
+        app_icon_found = False
+        while not app_icon_found:
+            screenshot_path = self.take_screenshot()
+            if screenshot_path:
+                app_icon_position = match_template(screenshot_path, target_icon_path, tolerance)
+                if app_icon_position:
+                    print("Found app icon, sending touch event...")
+                    x, y = app_icon_position
+                    self.send_touch_event(x, y)
+                    app_icon_found = True
+                else:
+                    login_icon_position = match_template(screenshot_path, login_icon_path, tolerance)
+                    if login_icon_position:
+                        print("Found login icon, sending touch event directly...")
+                        x, y = login_icon_position
+                        self.send_touch_event(x, y)
+                        break  # 找到login_icon后，跳出循环
+                    else:
+                        print("Neither app icon nor login icon found, retrying in 0.5 seconds...")
+                        time.sleep(0.5)
             else:
-                print("Match found but failed to extract position.")
-        else:
-            print("Failed to locate the app icon.")
+                print("Failed to take a screenshot, retrying in 0.5 seconds...")
+                time.sleep(0.5)
+
+            if app_icon_found:
+                print("App icon found and tapped, now looking for login icon...")
+                time.sleep(15)  # 假设应用打开后需要15秒加载至可操作界面
+
+                # 搜索login_icon，每0.5秒截一次图
+                start_time = time.time()
+                while time.time() - start_time < 30:  # 设置最长等待时间为30秒
+                    new_screenshot_path = self.take_screenshot()
+                    if new_screenshot_path:
+                        login_icon_position = match_template(new_screenshot_path, login_icon_path, tolerance)
+                        if login_icon_position:
+                            print("Login icon found, sending touch event...")
+                            x, y = login_icon_position
+                            self.send_touch_event(x, y)
+                            # 在这里添加登录之后的操作逻辑
+                            print("Login successful, proceeding with further actions...")
+                            break
+                    else:
+                        print("Failed to take a screenshot after tapping app icon.")
+                    time.sleep(0.5)
+
+                if not login_icon_position:
+                    print("Login icon not found within the given time.")
+
+    def find_element(self, target_image_path, tolerance=0.8, max_attempts=10):
+        screenshot_path = self.take_screenshot()
+        if screenshot_path is None:
+            print("Failed to take a screenshot")
+            return None
+
+        # 使用match_template方法寻找图标
+        for _ in range(max_attempts):
+            img = cv2.imread(screenshot_path, cv2.IMREAD_COLOR)  # 仅保留这一行，去掉下面的Image.open
+            template = cv2.imread(target_image_path, cv2.IMREAD_COLOR)
+
+            # 获取模板的宽度和高度
+            w, h = template.shape[:-1]
+
+            # 使用matchTemplate
+            res = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
+            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+
+            # 输出匹配得分
+            print(f"Match Score: {max_val}")
+
+            # 确保至少有一个匹配结果
+            if max_val >= tolerance:  # 更新这里，使用传入的tolerance参数
+                # 输出匹配位置
+                print(f"Match Location: {max_loc}")
+                return screenshot_path
+            time.sleep(0.5)
+        return None
+
 
 # 实例化并调用主操作
 emu_console = MuMuEmulator(r'E:\MuMuPlayer-12.0\shell\MuMuManager.exe', None)
-target_icon_path = 'app_icon.png'
-emu_console.main_operation(target_icon_path)
+target_icon_path = './search/JP_appicon.png'
+login_icon_path = './search/JP_login.png'
+emu_console.main_operation(target_icon_path, login_icon_path)
