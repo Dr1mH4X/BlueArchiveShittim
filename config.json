@@ -2,7 +2,7 @@
     "ip_address": "127.0.0.1",
     "port": "16448",
     "adb_path": "E:\\Program Files\\Netease\\MuMu Player 12\\shell\\adb.exe",
-    "mumu_manager_path": "E:\\Program Files\\Netease\\MuMu Player 12\\shell\\MuMuManager.exe",
+    "mumumanager_path": "E:\\Program Files\\Netease\\MuMu Player 12\\shell\\MuMuManager.exe",
     "log_path": "",
     "log_level": "info",
     "log": "true"
