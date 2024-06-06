@@ -28,7 +28,7 @@ pip install -r requirements.txt安装环境
 
 修改MuMu模拟器的分辨率为1280*720
 
-修改config.json路径即可
+修改config.json
 
 #### 写在最后的话
 本人完全不会Python，~~纯粹是自己用AI生成的~~，花了两天学的，请各位大佬轻喷。 
