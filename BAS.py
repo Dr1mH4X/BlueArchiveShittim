@@ -47,6 +47,21 @@ class Connect:                          # 连接adb/MuMuManager
                 print(f'[{current_time}]连接MuMuManager失败')
                 return None
             
+    def screenshot_time(self, MUMU_NUM):
+        start_time = time.time()
+        subprocess.run([self.mumumanager_path, 'adb', '-v', str(MUMU_NUM), 'shell', 'screencap', '-p', '/sdcard/Screenshots/BASscreencap.png'])
+        subprocess.run([mumu_manager_path, 'adb', '-v', str(MUMU_NUM), 'pull', '/sdcard/Screenshots/BASscreencap.png', './screenshot/BASscreencap.png'])
+        end_time = time.time()
+        single_screenshot_time = end_time - start_time
+        print(f'[{current_time}]截图耗时: ', single_screenshot_time)
+    
+    def mumumanager_screenshots(self, MUMU_NUM):
+        # 进入MuMuMnager的adbshell，在connect_mumumanager获取到MUMU_NUM后执行，然后等待判断应用是否启动后进入shell
+        while True:     # 开始0.5s/截图并拉取
+            subprocess.run([self.mumumanager_path, 'adb', '-v', str(MUMU_NUM), 'shell', 'screencap', '-p', '/sdcard/Screenshots/BASscreencap.png'])
+            subprocess.run([mumu_manager_path, 'adb', '-v', str(MUMU_NUM), 'pull', '/sdcard/Screenshots/BASscreencap.png', './screenshot/BASscreencap.png'])
+            time.sleep(0.5)
+                
     def connect_adb(self):              # 连接adb 后面再写 先用MuMuManager
         print(f'[{current_time}]正在连接adb...')
         pass
@@ -64,14 +79,19 @@ class Startup:
         #MuMuManager.exe api -v [模拟器序号] launch_app [package]  //启动app，带包名
         subprocess.run([self.mumumanager_path, 'api', '-v', str(MUMU_NUM), 'launch_app', JP_PACKAGE_NAME], capture_output=True, text=True)
         print(f'[{current_time}]已启动什亭之匣')
+        
+if __name__ == "__main__":
+    # 创建 Connect 类实例并连接 MuMuManager
+    connect_instance = Connect(mumu_manager_path, MUMU_ADB_PATH, LOCAL_ADB_PATH, ip_address, port)
+    MUMU_NUM = connect_instance.connect_mumumanager()
 
-connect_instance = Connect(mumu_manager_path, MUMU_ADB_PATH, LOCAL_ADB_PATH, ip_address, port)
-mumu_num = connect_instance.connect_mumumanager()
+    if MUMU_NUM is not None:
+        # 创建 Startup 类实例
+        startup_instance = Startup(mumu_manager_path, MUMU_ADB_PATH, ip_address, port, JP_PACKAGE_NAME)
+        startup_instance.startup_app(MUMU_NUM)
+        connect_instance.screenshot_time(MUMU_NUM)
+        connect_instance.mumumanager_screenshots(MUMU_NUM)
+    else:
+        print(f'[{current_time}] 无法连接到 MuMuManager')
 
-if mumu_num is not None:
-    print(f'[{current_time}]成功连接到 MuMuManager，模拟器序号为: {mumu_num}')
-    # 创建 Startup 类的实例并启动应用
-    startup_instance = Startup(mumu_manager_path, MUMU_ADB_PATH, ip_address, port, JP_PACKAGE_NAME)
-    startup_instance.startup_app(mumu_num)
-else:
-    print('无法连接到 MuMuManager')
+# 包名启动有问题，打开一直黑屏，不知道是我的问题还是什么情况(...重启模拟器好了)， 换成模拟点击再试试 图片模板对比还没写
