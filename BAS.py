@@ -19,7 +19,7 @@ JP_PACKAGE_NAME = 'com.YostarJP.BlueArchive'
 
 # 模板图片路径获取
 # JP_APPICON_PATH = os.path.join('galbol', 'yostarjapan', 'resources', 'template', 'appicon.jpg')       # MuMuManager使用包名启动应用
-JP_LOGIN_PATH = os.path.join('galbol', 'yostarjapan', 'resources', 'template', 'login.jpg')
+JP_LOGIN_PATH = os.path.join('golbal', 'yostarjapan', 'resources', 'template', 'login.png')
 current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
 template = os.path.join('screenshot', 'BASscreencap.png')
@@ -36,7 +36,7 @@ class Template:
             JP_LOGIN_PATH_GRAY = cv2.cvtColor(JP_LOGIN_PATH_CVREAD, cv2.COLOR_BGR2GRAY)                   # 转换为灰度图 
             template_GRAY = cv2.cvtColor(template_CVREAD, cv2.COLOR_BGR2GRAY)
             w, h = template_GRAY.shape[::-1]                                                    # 获取模板图片宽高
-            match = cv2.matchTemplate(JP_LOGIN_PATH_CVREAD, template_GRAY, cv2.TM_CCOEFF_NORMED)     # 模板匹配
+            match = cv2.matchTemplate(JP_LOGIN_PATH_GRAY, template_GRAY, cv2.TM_CCOEFF_NORMED)     # 模板匹配
             min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(match)
             threshold = 0.8
             if max_val > threshold:
@@ -91,11 +91,9 @@ class Connect:                          # 连接adb/MuMuManager
         print(f'[{current_time}]截图耗时: ', single_screenshot_time)
     
     def mumumanager_screenshots(self, MUMU_NUM):
-        # 进入MuMuMnager的adbshell，在connect_mumumanager获取到MUMU_NUM后执行，然后等待判断应用是否启动后进入shell
-        while True:     # 开始0.5s/截图并拉取
-            subprocess.run([self.mumumanager_path, 'adb', '-v', str(MUMU_NUM), 'shell', 'screencap', '-p', '/sdcard/Screenshots/BASscreencap.png'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            subprocess.run([mumu_manager_path, 'adb', '-v', str(MUMU_NUM), 'pull', '/sdcard/Screenshots/BASscreencap.png', './screenshot/BASscreencap.png'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            time.sleep(0.5)
+        # while True: # ~~进入MuMuMnager的adbshell，在connect_mumumanager获取到MUMU_NUM后执行，然后等待判断应用是否启动后进入shell 开始0.5s/截图并拉取~~ 去除无限循环，改为在主程序中匹配时才调用循环     
+        subprocess.run([self.mumumanager_path, 'adb', '-v', str(MUMU_NUM), 'shell', 'screencap', '-p', '/sdcard/Screenshots/BASscreencap.png'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run([mumu_manager_path, 'adb', '-v', str(MUMU_NUM), 'pull', '/sdcard/Screenshots/BASscreencap.png', './screenshot/BASscreencap.png'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 
     def connect_adb(self):              # 连接adb 后面再写 先用MuMuManager
         current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
@@ -116,6 +114,17 @@ class Startup:
         subprocess.run([self.mumumanager_path, 'api', '-v', str(MUMU_NUM), 'launch_app', JP_PACKAGE_NAME], capture_output=True, text=True)
         current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         print(f'[{current_time}]已启动什亭之匣')
+
+class Click:
+
+    def __init__(self, mumu_manager_path, MUMU_ADB_PATH, ip_address, port):
+        self.mumumanager_path = mumu_manager_path
+        self.MUMU_ADB_PATH = MUMU_ADB_PATH
+        self.ip_address = ip_address
+        self.port = port
+
+    def click_middle(self):
+        
         
 if __name__ == "__main__":
     # 创建 Connect 类实例并连接 MuMuManager
@@ -133,7 +142,13 @@ if __name__ == "__main__":
         match_points = []
         # 循环等待模板匹配
         for template_center_point in template_instance.match():
-            match_points.append(template_center_point)
+            connect_instance.mumumanager_screenshots(MUMU_NUM)
+            if template_center_point is not None:
+                match_points.append(template_center_point)
+            else:
+                current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                print(f'[{current_time}]模板匹配失败，请检查模板是否正确或重新运行程序')
+                break
         
     else:
         current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
