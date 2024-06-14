@@ -4,6 +4,8 @@ import os
 import subprocess
 import cv2  # opencv实现图像模板匹配定位
 import numpy as np
+from pyminitouch import MNTDevice
+import re
 
 with open('config.json', 'r') as f:     # 读取config.json文件
     config = json.load(f)
@@ -30,7 +32,10 @@ class Template:
         self.JP_LOGIN_PATH = JP_LOGIN_PATH
         
     def match(self):
+        start_time = time.time()
         while True:
+            if time.time() - start_time > 60:
+                break
             JP_LOGIN_PATH_CVREAD = cv2.imread(self.JP_LOGIN_PATH)                                         # 读取截图
             template_CVREAD = cv2.imread(self.template)
             JP_LOGIN_PATH_GRAY = cv2.cvtColor(JP_LOGIN_PATH_CVREAD, cv2.COLOR_BGR2GRAY)                   # 转换为灰度图 
@@ -117,13 +122,28 @@ class Startup:
 
 class Click:
 
-    def __init__(self, mumu_manager_path, MUMU_ADB_PATH, ip_address, port):
+    def __init__(self, mumu_manager_path, MUMU_ADB_PATH, MUMU_NUM, ip_address, port):
         self.mumumanager_path = mumu_manager_path
         self.MUMU_ADB_PATH = MUMU_ADB_PATH
+        self.MUMU_NUM = MUMU_NUM
         self.ip_address = ip_address
         self.port = port
+        self.device_uuid = f'{ip_address}:{port}'
 
-    def click_middle(self):
+    def minitouch(self, x, y):
+        if self.device_uuid is not None:
+            _DEVICE_ID = self.device_uuid
+            device = MNTDevice(_DEVICE_ID)
+            device.tap([(x, y)])
+            device.sync()
+        else:
+            current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+            raise  ValueError(f'[{current_time}] DEVICE_UUID获取失败')
+            
+        command = [MUMU_ADB_PATH, '-s', ip_address, port, 'shell', '/data/local/tmp/minitouch', f'{x},{y}', 'd', ]
+        subprocess.run(command)
+        pass
+        
         
         
 if __name__ == "__main__":
@@ -135,23 +155,29 @@ if __name__ == "__main__":
         # 创建 Startup 类实例
         startup_instance = Startup(mumu_manager_path, MUMU_ADB_PATH, ip_address, port, JP_PACKAGE_NAME)
         startup_instance.startup_app(MUMU_NUM)
+        # 创建Connect类实例
         connect_instance.screenshot_time(MUMU_NUM)
         connect_instance.mumumanager_screenshots(MUMU_NUM)
         # 创建 Template 类实例
         template_instance = Template(template, JP_LOGIN_PATH)
         match_points = []
+        # 创建Click类实例
+        click_instance = Click(mumu_manager_path, MUMU_ADB_PATH, MUMU_NUM, ip_address, port)
         # 循环等待模板匹配
         for template_center_point in template_instance.match():
             connect_instance.mumumanager_screenshots(MUMU_NUM)
             if template_center_point is not None:
-                match_points.append(template_center_point)
+                match_points.append(template_center_point)      # Click用的时候*template_center_point展开为x,y
+                click_instance.minitouch(640, 360)
             else:
+                '''
                 current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
                 print(f'[{current_time}]模板匹配失败，请检查模板是否正确或重新运行程序')
+                '''
                 break
         
     else:
         current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         print(f'[{current_time}] 无法连接到 MuMuManager')
 
-# 不知道为什么不输出模板匹配情况。
+# Minitouch 和官方文档写的demo没问题但是显示系统找不到指定的文件？搞不懂
