@@ -130,6 +130,10 @@ class Click:
         self.port = port
         self.device_uuid = f'{ip_address}:{port}'
 
+    def push_minitouch(self):
+        subprocess.run(self.mumumanager_path, 'adb', '-v', str(self.MUMU_NUM), 'push', 'minitouch', '/data/local/tmp/minitouch')
+        pass
+
     def minitouch(self, x, y):
         if self.device_uuid is not None:
             _DEVICE_ID = self.device_uuid
