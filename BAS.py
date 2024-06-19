@@ -4,8 +4,6 @@ import os
 import subprocess
 import cv2  # opencv实现图像模板匹配定位
 import numpy as np
-from pyminitouch import MNTDevice
-import re
 
 with open('config.json', 'r') as f:     # 读取config.json文件
     config = json.load(f)
@@ -16,32 +14,34 @@ mumu_path = config.get('mumu_path')     # 获取mumu_path
 mumu_manager_path = os.path.join(mumu_path, 'shell', 'MumuManager.exe')     # 获取MumuManager.exe路径
 MUMU_ADB_PATH = os.path.join(mumu_path, 'shell', 'adb.exe')                 # MuMu的adb路径
 LOCAL_ADB_PATH = os.path.join('adb', 'adb.exe')                             # 本地adb路径
+current_dir = os.path.dirname(os.path.abspath(__file__))                    # 构造相对路径
+maatouch_path = os.path.join(current_dir, 'maatouch')                       # 构造maatouch路径
 # 包名获取
 JP_PACKAGE_NAME = 'com.YostarJP.BlueArchive'
 
 # 模板图片路径获取
 # JP_APPICON_PATH = os.path.join('galbol', 'yostarjapan', 'resources', 'template', 'appicon.jpg')       # MuMuManager使用包名启动应用
 JP_LOGIN_PATH = os.path.join('golbal', 'yostarjapan', 'resources', 'template', 'login.png')
+JP_SIGN_REWARDS_PATH = os.path.join('golbal', 'yostarjapan', 'resources', 'template', 'sign_rewards.png')
 current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
 template = os.path.join('screenshot', 'BASscreencap.png')
 
 class Template:
-    def __init__(self, template, JP_LOGIN_PATH):
+    def __init__(self):
         self.template = template
-        self.JP_LOGIN_PATH = JP_LOGIN_PATH
-        
-    def match(self):
+    
+    def match(self, template_path, target_path):
         start_time = time.time()
         while True:
             if time.time() - start_time > 60:
                 break
-            JP_LOGIN_PATH_CVREAD = cv2.imread(self.JP_LOGIN_PATH)                                         # 读取截图
-            template_CVREAD = cv2.imread(self.template)
-            JP_LOGIN_PATH_GRAY = cv2.cvtColor(JP_LOGIN_PATH_CVREAD, cv2.COLOR_BGR2GRAY)                   # 转换为灰度图 
-            template_GRAY = cv2.cvtColor(template_CVREAD, cv2.COLOR_BGR2GRAY)
-            w, h = template_GRAY.shape[::-1]                                                    # 获取模板图片宽高
-            match = cv2.matchTemplate(JP_LOGIN_PATH_GRAY, template_GRAY, cv2.TM_CCOEFF_NORMED)     # 模板匹配
+            target_image = cv2.imread(target_path)  # 读取截图
+            template_image = cv2.imread(template_path)
+            target_gray = cv2.cvtColor(target_image, cv2.COLOR_BGR2GRAY)  # 转换为灰度图 
+            template_gray = cv2.cvtColor(template_image, cv2.COLOR_BGR2GRAY)
+            w, h = template_gray.shape[::-1]  # 获取模板图片宽高
+            match = cv2.matchTemplate(target_gray, template_gray, cv2.TM_CCOEFF_NORMED)  # 模板匹配
             min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(match)
             threshold = 0.8
             if max_val > threshold:
@@ -118,70 +118,96 @@ class Startup:
         #MuMuManager.exe api -v [模拟器序号] launch_app [package]  //启动app，带包名
         subprocess.run([self.mumumanager_path, 'api', '-v', str(MUMU_NUM), 'launch_app', JP_PACKAGE_NAME], capture_output=True, text=True)
         current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        print(f'[{current_time}]已启动什亭之匣')
+        print(f'[{current_time}] 已启动什亭之匣')
 
 class Click:
 
-    def __init__(self, mumu_manager_path, MUMU_ADB_PATH, MUMU_NUM, ip_address, port):
+    def __init__(self, mumu_manager_path, MUMU_ADB_PATH, maatouch_path, MUMU_NUM, ip_address, port):
         self.mumumanager_path = mumu_manager_path
         self.MUMU_ADB_PATH = MUMU_ADB_PATH
+        self.maatouch_path = maatouch_path
         self.MUMU_NUM = MUMU_NUM
         self.ip_address = ip_address
         self.port = port
         self.device_uuid = f'{ip_address}:{port}'
 
-    def push_minitouch(self):
-        subprocess.run(self.mumumanager_path, 'adb', '-v', str(self.MUMU_NUM), 'push', 'minitouch', '/data/local/tmp/minitouch')
+    '''
+    def push_maatouch(self):
+        subprocess.run([self.mumumanager_path, 'adb', '-v', str(self.MUMU_NUM), 'push', self.maatouch_path, '/data/local/tmp/'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.run("adb shell chmod +x /data/local/tmp/maatouch", shell=True)
+        subprocess.run("adb shell /data/local/tmp/maatouch", shell=True)                                                      # 启动 MaaTouch
+        current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        print(f'[{current_time}] 启动 MaaTouch')
         pass
+    '''
 
-    def minitouch(self, x, y):
-        if self.device_uuid is not None:
-            _DEVICE_ID = self.device_uuid
-            device = MNTDevice(_DEVICE_ID)
-            device.tap([(x, y)])
-            device.sync()
-        else:
-            current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-            raise  ValueError(f'[{current_time}] DEVICE_UUID获取失败')
-            
-        command = [MUMU_ADB_PATH, '-s', ip_address, port, 'shell', '/data/local/tmp/minitouch', f'{x},{y}', 'd', ]
-        subprocess.run(command)
-        pass
+    def send_touch_event(self, x, y):
+        # 模拟按下
+        press_cmd = [
+            self.mumumanager_path, 
+            'adb', 
+            '-v', 
+            str(self.MUMU_NUM), 
+            'shell', 
+            'input tap', 
+            str(x), 
+            str(y), 
+        ]
+        subprocess.run(press_cmd)
+        current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        print(f'[{current_time}] Using ADB Input Tap: {x} {y}')
         
-        
-        
-if __name__ == "__main__":
-    # 创建 Connect 类实例并连接 MuMuManager
+if __name__ == "__main__":  # 创建 Connect 类实例并连接 MuMuManager
     connect_instance = Connect(mumu_manager_path, MUMU_ADB_PATH, LOCAL_ADB_PATH, ip_address, port)
     MUMU_NUM = connect_instance.connect_mumumanager()
 
     if MUMU_NUM is not None:
-        # 创建 Startup 类实例
-        startup_instance = Startup(mumu_manager_path, MUMU_ADB_PATH, ip_address, port, JP_PACKAGE_NAME)
+        startup_instance = Startup(mumu_manager_path, MUMU_ADB_PATH, ip_address, port, JP_PACKAGE_NAME)                         # 创建 Startup 类实例
         startup_instance.startup_app(MUMU_NUM)
-        # 创建Connect类实例
-        connect_instance.screenshot_time(MUMU_NUM)
+        connect_instance.screenshot_time(MUMU_NUM)                                                                              # 创建Connect类实例
         connect_instance.mumumanager_screenshots(MUMU_NUM)
-        # 创建 Template 类实例
-        template_instance = Template(template, JP_LOGIN_PATH)
+        template_instance = Template()                                                                                          # 创建 Template 类实例
+        templates_to_match = [JP_LOGIN_PATH]                                                                                    # 列表中可以包含多个模板路径
         match_points = []
-        # 创建Click类实例
-        click_instance = Click(mumu_manager_path, MUMU_ADB_PATH, MUMU_NUM, ip_address, port)
-        # 循环等待模板匹配
-        for template_center_point in template_instance.match():
-            connect_instance.mumumanager_screenshots(MUMU_NUM)
-            if template_center_point is not None:
-                match_points.append(template_center_point)      # Click用的时候*template_center_point展开为x,y
-                click_instance.minitouch(640, 360)
-            else:
-                '''
-                current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-                print(f'[{current_time}]模板匹配失败，请检查模板是否正确或重新运行程序')
-                '''
-                break
+        click_instance = Click(mumu_manager_path, MUMU_ADB_PATH, maatouch_path, MUMU_NUM, ip_address, port)                     # 创建Click类实例
+        for template_path in templates_to_match:  # 循环等待模板匹配
+            match_generator = template_instance.match(template_path, template)
+            while True:
+                connect_instance.mumumanager_screenshots(MUMU_NUM)  # 更新截图
+                template_center_point = next(match_generator)
+                if template_center_point is not None:
+                    match_points.append(template_center_point)  # Click用的时候*template_center_point展开为x,y
+                    click_instance.send_touch_event(600, 600)
+                    current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                    print(f'[{current_time}] Login Success')
+                    break
+                else:
+                    current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                    print(f'[{current_time}] Waiting Template')
+                    time.sleep(1)
+
+        templates_to_match = [JP_SIGN_REWARDS_PATH]  # 列表中可以包含多个模板路径
+        match_points = []
+        for template_path in templates_to_match:  # 循环等待模板匹配
+            match_generator = template_instance.match(template_path, template)
+            while True:
+                connect_instance.mumumanager_screenshots(MUMU_NUM)  # 更新截图
+                template_center_point = next(match_generator)
+                if template_center_point is not None:
+                    match_points.append(template_center_point)  # Click用的时候*template_center_point展开为x,y
+                    click_instance.send_touch_event(600, 600)
+                    current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                    print(f'[{current_time}] Login Rewards Success')
+                    break
+                else:
+                    current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                    print(f'[{current_time}] Waiting Template')
+                    time.sleep(1)
+
         
+
     else:
         current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         print(f'[{current_time}] 无法连接到 MuMuManager')
 
-# Minitouch 和官方文档写的demo没问题但是显示系统找不到指定的文件？搞不懂
+# USE ADBINPUT
