@@ -18,7 +18,7 @@ BAS意为碧蓝档案什亭之匣 你的BA自动化助手
 
 模拟器支持：**MuMu12**
 
-平台支持：**Windows**或其他可以运行python的平台（只在Windows11上进行过测试)
+平台支持：**Windows**或其他可以运行python的平台(只在Windows11上进行过测试)
 
 ### 如何使用 How to use?
 
