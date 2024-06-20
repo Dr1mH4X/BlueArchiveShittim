@@ -4,24 +4,34 @@ BAS意为碧蓝档案什亭之匣 你的BA自动化助手
 
 基于图像识别技术，一键长草日常任务
 
-目前还处于早期开发阶段，联系我们ranhoo@dreamhax.cc
+## 开发计划 Roadmap
 
-## 更新计划板
+~~连接设备~~ ✔
 
-启动APP ✔
+~~截图匹配~~ ✔
 
-截图模块 ✔
+~~模拟点击~~ ✔
 
-点击模块
+一键长草
 
+### 适配
 
-### 如何使用
+模拟器支持：**MuMu12**
 
-pip install -r requirements.txt安装环境
+平台支持：**Windows**或其他可以运行python的平台（只在Windows11上进行过测试)
+
+### 如何使用 How to use?
+
+```python
+pip install -r requirements.txt
+```
+
+配置config.json
 
 修改MuMu模拟器的分辨率为1280*720
 
-修改config.json
+### 写在最后的话
 
-#### 写在最后的话
-本人完全不会Python，花了两天学的，请各位大佬轻喷。欢迎各位来参与这个项目
+本人完全不会Python，花了两天学的，请各位大佬轻喷。
+
+欢迎各位来参与这个项目 联系邮箱:ranhoo@dreamhax.cc
