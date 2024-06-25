@@ -23,6 +23,12 @@ JP_PACKAGE_NAME = 'com.YostarJP.BlueArchive'
 # JP_APPICON_PATH = os.path.join('galbol', 'yostarjapan', 'resources', 'template', 'appicon.jpg')       # MuMuManager使用包名启动应用
 JP_LOGIN_PATH = os.path.join('golbal', 'yostarjapan', 'resources', 'template', 'login.png')
 JP_SIGN_REWARDS_PATH = os.path.join('golbal', 'yostarjapan', 'resources', 'template', 'sign_rewards.png')
+JP_CLOSE_NEWS_PATH = os.path.join('golbal', 'yostarjapan', 'resources', 'template', 'close_news.png')
+JP_SOCIAL_PATH = os.path.join('golbal', 'yostarjapan', 'resources', 'template', 'social.png')
+JP_CLUB_PATH = os.path.join('golbal', 'yostarjapan', 'resources', 'template', 'club.png')
+JP_OK_PATH = os.path.join('golbal', 'yostarjapan', 'resources', 'template', 'ok.png')
+JP_HOME_PATH = os.path.join('golbal', 'yostarjapan', 'resources', 'template', 'home.png')
+JP_MAIL_PATH = os.path.join('golbal', 'yostarjapan', 'resources', 'template', 'mail.png')
 current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
 template = os.path.join('screenshot', 'BASscreencap.png')
@@ -200,10 +206,90 @@ if __name__ == "__main__":  # 创建 Connect 类实例并连接 MuMuManager
                     print(f'[{current_time}] Login Rewards Success')
                     break
                 else:
-                    current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-                    print(f'[{current_time}] Waiting Template')
                     time.sleep(1)
 
+        templates_to_match = [JP_CLOSE_NEWS_PATH]
+        match_points = []
+        for template_path in templates_to_match:  # 循环等待模板匹配
+            match_generator = template_instance.match(template_path, template)
+            while True:
+                connect_instance.mumumanager_screenshots(MUMU_NUM)  # 更新截图
+                template_center_point = next(match_generator)
+                if template_center_point is not None:
+                    match_points.append(template_center_point)  # Click用的时候*template_center_point展开为x,y
+                    click_instance.send_touch_event(*template_center_point)
+                    current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                    print(f'[{current_time}] Close news Success')
+                    break
+                else:
+                    time.sleep(1)
+
+        templates_to_match = [JP_SOCIAL_PATH]
+        match_points = []
+        for template_path in templates_to_match:  # 循环等待模板匹配
+            match_generator = template_instance.match(template_path, template)
+            while True:
+                connect_instance.mumumanager_screenshots(MUMU_NUM)  # 更新截图
+                template_center_point = next(match_generator)
+                if template_center_point is not None:
+                    match_points.append(template_center_point)  # Click用的时候*template_center_point展开为x,y
+                    click_instance.send_touch_event(*template_center_point)
+                    current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                    print(f'[{current_time}] Go To Social Success')
+                    break
+                else:
+                    time.sleep(1)
+
+        templates_to_match = [JP_CLUB_PATH]
+        match_points = []
+        for template_path in templates_to_match:  # 循环等待模板匹配
+            match_generator = template_instance.match(template_path, template)
+            while True:
+                connect_instance.mumumanager_screenshots(MUMU_NUM)  # 更新截图
+                template_center_point = next(match_generator)
+                if template_center_point is not None:
+                    match_points.append(template_center_point)  # Click用的时候*template_center_point展开为x,y
+                    click_instance.send_touch_event(*template_center_point)
+                    current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                    print(f'[{current_time}] Go To Club Success')
+                    break
+                else:
+                    time.sleep(1)
+        
+        templates_to_match = [JP_OK_PATH]
+        match_points = []
+        for template_path in templates_to_match:  # 循环等待模板匹配
+            match_generator = template_instance.match(template_path, template)
+            while True:
+                connect_instance.mumumanager_screenshots(MUMU_NUM)  # 更新截图
+                template_center_point = next(match_generator)
+                if template_center_point is not None:
+                    match_points.append(template_center_point)  # Click用的时候*template_center_point展开为x,y
+                    click_instance.send_touch_event(*template_center_point)
+                    current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                    print(f'[{current_time}] 领取社团10体力 Success')
+                    break
+                else:
+                    time.sleep(1)
+
+        templates_to_match = [JP_HOME_PATH]
+        match_points = []
+        for template_path in templates_to_match:  # 循环等待模板匹配
+            match_generator = template_instance.match(template_path, template)
+            while True:
+                connect_instance.mumumanager_screenshots(MUMU_NUM)  # 更新截图
+                template_center_point = next(match_generator)
+                if template_center_point is not None:
+                    match_points.append(template_center_point)  # Click用的时候*template_center_point展开为x,y
+                    click_instance.send_touch_event(*template_center_point)
+                    current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                    print(f'[{current_time}] Back Home Success')
+                    break
+                else:
+                    time.sleep(1)
+
+        current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        print(f'[{current_time}] 其他功能开发中，尽请期待')
         
 
     else:
