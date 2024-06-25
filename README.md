@@ -38,4 +38,6 @@ pip install -r requirements.txt
 
 本人完全不会Python，花了两天学的，请各位大佬轻喷。
 
-欢迎各位来参与这个项目 联系邮箱:ranhoo@dreamhax.cc
+欢迎各位来参与这个项目
+交流群组:754094907
+联系邮箱:ranhoo@dreamhax.cc
