@@ -391,7 +391,7 @@ if __name__ == "__main__":  # 创建 Connect 类实例并连接 MuMuManager
                             time.sleep(2)
 
         
-# next class
+# next class and Coffee
         
 
     else:
