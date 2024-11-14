@@ -1,0 +1,5 @@
+cv2.rectangle(img, top_left, bottom_right, (0, 0, 255), 2)
+cv2.circle(img, (cx, cy), 5, (0, 255, 0), -1)
+cv2.imshow('result', img)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
