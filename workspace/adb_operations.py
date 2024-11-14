@@ -17,7 +17,7 @@ def Adbconn():                                                  # adb连接
         diserror = 1
     current_info = status.app_current()  
     if current_info['package'] == "com.YostarJP.BlueArchive":   #判断当前应用是否为日服BA，是则继续，否则打开
-        print(f"当前前台已运行日服BA")
+        print(f"当前前台已运行日服碧蓝档案")
     else:
         app = status.session("com.YostarJP.BlueArchive")        # 启动应用并获取session # session的用途是操作的同时监控应用是否闪退，当闪退时操作，会抛出SessionBrokenError
         print(f"启动碧蓝档案[jp]")
