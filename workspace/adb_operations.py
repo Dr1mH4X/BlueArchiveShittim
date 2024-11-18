@@ -34,23 +34,33 @@ def Adbstart(ADBaddress, diserror):                             # 屏幕大小�
 
 def Screenshot(WorkSignal):
     status = u2.connect()
+    screenshot_dir = './workspace/screenshot'
+    screenshot_path = os.path.join(screenshot_dir, 'current_screen.jpg')
+    os.makedirs(screenshot_dir, exist_ok=True)                  # 确保目录存在
+
     if WorkSignal == 1:
-        # print(f"开始截图...")
-        while Screenshot.running:                               # 控制截图的开始和结束
-            status.screenshot().save("./workspace/screenshot/current_screen.jpg")
+        while Screenshot.running:
+            try:
+                # 截图并保存
+                status.screenshot().save(screenshot_path)
+            except Exception as e:
+                print(f"Error saving screenshot: {e}")
             time.sleep(1)
-    # else:
-    #     print(f"停止截图")
 Screenshot.running = False                                      # 初始状态为未运行
     
 
 def CompareScreenshot(Template):
     import cv2
     threshold = 0.8                                             # 匹配相似度
+    img_path = './workspace/screenshot/current_screen.jpg'
     template_path = os.path.join('./workspace/resource/jp/', f'{Template}.png')
     while True:
-        img = cv2.imread('./workspace/screenshot/current_screen.jpg')
+        img = cv2.imread(img_path)
         template_img = cv2.imread(template_path) 
+        if img is None:
+            print(f"Error: Unable to read screenshot from {img_path}")
+        if template_img is None:
+            print(f"Error: Unable to read template image from {template_path}")
         h, w = template_img.shape[:2]
         result = cv2.matchTemplate(img, template_img, cv2.TM_CCOEFF_NORMED)
         _, max_val, _, _ = cv2.minMaxLoc(result)
@@ -63,7 +73,7 @@ def CompareScreenshot(Template):
                 print(f"current_screen.jpg 文件不存在")
             return 1
         else:
-            time.sleep(1)
+            time.sleep(1.5)
 
 def Touch(location):                                            # 例：Touch('login')
     import json

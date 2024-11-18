@@ -4,7 +4,7 @@ from adb_operations import Adbconn, Adbdisconn, Adbstart, main_task
 def login():
     # 登录
     main_task('login')
-    # main_task('login_event') # 每日奖励
+    main_task('login_event') # 每日奖励
     main_task('close_news')
 
 def club_reward():
@@ -25,4 +25,6 @@ def mail_reward():
 ADBaddress, diserror = Adbconn()                                # 开始连接
 Adbstart(ADBaddress, diserror)
 login()
+club_reward()
+mail_reward()
 Adbdisconn(ADBaddress)                                          # 断开连接
