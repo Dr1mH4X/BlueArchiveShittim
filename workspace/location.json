@@ -8,5 +8,10 @@
     "home": [1235, 24],
     "mail": [1142, 39],
     "receive_mail": [1136, 670],
-    "get_rewarded": [640, 162]
+    "get_rewarded": [640, 162],
+    "calendar": [210, 647],
+    "schale_office_area": [1022, 185],
+    "all_calendar": [1166, 665],
+    "first_room": [260, 240],
+    "start_calendar": [638, 551]
 }

@@ -88,17 +88,30 @@ def Touch(location):                                            # 例：Touch('l
     status.click(x, y)
     print(f'click {x},{y}')
 
-def main_task(Template):                                        # 主流程函数，协调 Screenshot、CompareScreenshot 和 Touch
+def main_task(Template, touch):                                 
+    """
+    主流程函数，协调 Screenshot、CompareScreenshot 和 Touch。
+    通过 touch 参数判断是否需要触摸。
+    :param Template: 模板图片，用于比对。
+    :param touch: 布尔值，True 表示执行点击操作，False 表示仅比对不触摸。
+    """
     import threading
+    import time
+
     Screenshot.running = True                                   # 启动截图线程
     screenshot_thread = threading.Thread(target=Screenshot, args=(1,))
     screenshot_thread.start()
-    time.sleep(1)
+    time.sleep(1)                                               # 等待截图线程启动
+
     try:
         result = CompareScreenshot(Template)                    # 比对截图
         if result == 1:
-            Touch(Template)                                     # 找到后点击目标
-            print(f"已完成动作「'{Template}'」")
+            if touch:                                           # 判断是否需要点击
+                Touch(Template)                                
+                print(f"已完成动作「'{Template}'」")
+            else:
+                print(f"模板 '{Template}' 匹配成功，但未执行点击操作")
     finally:
         Screenshot.running = False                              # 停止截图
         screenshot_thread.join()                                # 等待线程结束
+
