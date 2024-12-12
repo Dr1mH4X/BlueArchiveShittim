@@ -115,3 +115,10 @@ def main_task(Template, touch):
         Screenshot.running = False                              # 停止截图
         screenshot_thread.join()                                # 等待线程结束
 
+def touch_and_wait():
+    time.sleep(5)
+    Touch('next_calendar')
+    time.sleep(2)
+    Touch('next_calendar')
+    time.sleep(2)
+    Touch('next_calendar')

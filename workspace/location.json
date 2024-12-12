@@ -13,5 +13,7 @@
     "schale_office_area": [1022, 185],
     "all_calendar": [1166, 665],
     "first_room": [260, 240],
-    "start_calendar": [638, 551]
+    "start_calendar": [638, 551],
+    "next_calendar": [1247, 364],
+    "cafe": [93, 656]
 }

@@ -1,5 +1,6 @@
 #main.py
-from adb_operations import Adbconn, Adbdisconn, Adbstart, main_task
+from adb_operations import Adbconn, Adbdisconn, Adbstart, main_task, touch_and_wait, Touch
+import time
 
 def login():
     # 登录
@@ -24,10 +25,24 @@ def calendar():
     # 日程表
     main_task('calendar', touch=True)
     main_task('schale_office_area', touch=True)
+    # 循环开始
     main_task('all_calendar', touch=True)
     main_task('first_room', touch=True)
     main_task('start_calendar', touch=True)
-    pass
+    touch_and_wait()
+    #循环结束
+    for z in range(6):
+        main_task('all_calendar', touch=True)
+        time.sleep(2)
+        Touch('first_room')
+        main_task('start_calendar', touch=True)
+        touch_and_wait()
+    main_task('home', touch=True)
+def cafe():
+    main_task('cafe', touch=True)
+    time.sleep(5)
+    Touch('next_calendar')
+    
 
 ADBaddress, diserror = Adbconn()                                # 开始连接
 Adbstart(ADBaddress, diserror)
